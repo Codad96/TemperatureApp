@@ -3,27 +3,22 @@ package com.example.tempapp;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
 import android.view.Menu;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.navigation.NavigationView;
-
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.tempapp.databinding.ActivityMainBinding;
-
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,9 +37,10 @@ public class MainActivity extends AppCompatActivity {
     Handler mainHandler = new Handler();
     ProgressDialog progressDialog;
     Button showGraph;
+    ActivityMainBinding binding;
+
 
     private AppBarConfiguration mAppBarConfiguration;
-    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,14 +48,16 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        initializeTempList();
 
         setSupportActionBar(binding.appBarMain.toolbar);
         binding.appBarMain.fetchDatabtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Fetching data", Snackbar.LENGTH_LONG)
+                new fetchData().start();
+
+                Snackbar.make(view, "Data fetched", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                    new fetchData().start();
             }
         });
         DrawerLayout drawer = binding.drawerLayout;
@@ -73,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
-        initializeTempList();
 
     }
 
@@ -96,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         tempList = new ArrayList<>();
         timeList = new ArrayList<>();
         listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,tempList);
-        // binding.tempList.setAdapter(listAdapter); put the right temp list later
+        binding.tempList.setAdapter(listAdapter);
 
     }
 

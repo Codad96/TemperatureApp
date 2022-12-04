@@ -23,5 +23,13 @@
         app:headerLayout="@layout/nav_header_main"
         app:itemIconTint="@color/material_dynamic_primary50"
         app:itemTextAppearance="@style/TextAppearance.AppCompat.Body2"
-        app:menu="@menu/activity_main_drawer" />
+        app:menu="@menu/activity_main_drawer" >
+
+        <ListView
+            android:id="@+id/tempList"
+            android:layout_width="match_parent"
+            android:layout_height="173dp"
+            android:visibility="visible"
+            tools:visibility="visible" />
+    </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>
