@@ -1,8 +1,12 @@
 package com.example.tempapp;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.view.Menu;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
@@ -16,8 +20,28 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.tempapp.databinding.ActivityMainBinding;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity {
+
+    ArrayList<String> tempList;
+    ArrayList<String> timeList;
+    ArrayAdapter<String> listAdapter;
+    Handler mainHandler = new Handler();
+    ProgressDialog progressDialog;
+    Button showGraph;
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
@@ -30,11 +54,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.appBarMain.toolbar);
-        binding.appBarMain.drawGraphbtn.setOnClickListener(new View.OnClickListener() {
+        binding.appBarMain.fetchDatabtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Fetching data", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                    new fetchData().start();
             }
         });
         DrawerLayout drawer = binding.drawerLayout;
@@ -48,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+        initializeTempList();
+
     }
 
     @Override
@@ -63,5 +90,76 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
+
+
+    private void initializeTempList(){
+        tempList = new ArrayList<>();
+        timeList = new ArrayList<>();
+        listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,tempList);
+        // binding.tempList.setAdapter(listAdapter); put the right temp list later
+
+    }
+
+    class fetchData extends  Thread {
+
+        String data = "";
+        @Override
+        public void run() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    progressDialog = new ProgressDialog(MainActivity.this);
+                    progressDialog.setMessage("Fetching Data");
+                    progressDialog.setCancelable(false);
+                    progressDialog.show();
+                }
+            });
+
+            try {
+                URL url = new URL("https://api.npoint.io/eb9ea1e04b931e47c794");
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                InputStream inputStream = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                while ((line = bufferedReader.readLine()) != null){
+                    data = data + line;
+                }
+
+                if (!data.isEmpty()) {
+                    JSONObject jsonObject = new JSONObject(data);
+                    JSONArray temps = jsonObject.getJSONArray("Temp");
+                    tempList.clear();
+
+                    for (int i = 0; i < temps.length(); i++) {
+                        JSONObject tempObject = temps.getJSONObject(i);
+                        String Time = tempObject.getString("timestamp");
+                        String Temp = tempObject.getString("tempData");
+                        tempList.add("Temp " + (i + 1) + " = " + Temp + " Time: " + Time);
+
+                    }
+                }
+            }
+            catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (progressDialog.isShowing()){
+                        progressDialog.dismiss();
+                    }
+                    listAdapter.notifyDataSetChanged();
+                }
+            });
+
+
+        }
+    }
+
 }
 
